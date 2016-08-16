@@ -11,7 +11,7 @@ after_initialize do
 
     class Utils
       def self.s3_store
-        FileStore::S3Store.new(s3_helper, GlobalSetting.backup_uploads_to_s3_bucket)
+        FileStore::S3Store.new(s3_helper, backup_uploads_to_s3_bucket)
       end
 
       def self.s3_helper
@@ -21,19 +21,30 @@ after_initialize do
           secret_access_key: GlobalSetting.backup_uploads_to_s3_secret_access_key
         }
 
-        ::S3Helper.new(
-          GlobalSetting.backup_uploads_to_s3_bucket.downcase,
+        S3Helper.new(
+          backup_uploads_to_s3_bucket,
           ::FileStore::S3Store::TOMBSTONE_PREFIX,
           options
         )
       end
 
       def self.backup_uploads_to_s3?
-        GlobalSetting.respond_to?(:backup_uploads_to_s3_enabled) && GlobalSetting.backup_uploads_to_s3_enabled &&
-        GlobalSetting.respond_to?(:backup_uploads_to_s3_bucket) && !GlobalSetting.backup_uploads_to_s3_bucket.blank? &&
-        GlobalSetting.respond_to?(:backup_uploads_to_s3_access_key_id) && !GlobalSetting.backup_uploads_to_s3_access_key_id.blank? &&
-        GlobalSetting.respond_to?(:backup_uploads_to_s3_secret_access_key) && !GlobalSetting.backup_uploads_to_s3_secret_access_key.blank? &&
-        GlobalSetting.respond_to?(:backup_uploads_to_s3_region) && !GlobalSetting.backup_uploads_to_s3_region.blank?
+        @backup_uploads_to_s3 ||= begin
+          GlobalSetting.respond_to?(:backup_uploads_to_s3_enabled) &&
+          GlobalSetting.backup_uploads_to_s3_enabled &&
+          GlobalSetting.respond_to?(:backup_uploads_to_s3_bucket) &&
+          !GlobalSetting.backup_uploads_to_s3_bucket.blank? &&
+          GlobalSetting.respond_to?(:backup_uploads_to_s3_access_key_id) &&
+          !GlobalSetting.backup_uploads_to_s3_access_key_id.blank? &&
+          GlobalSetting.respond_to?(:backup_uploads_to_s3_secret_access_key) &&
+          !GlobalSetting.backup_uploads_to_s3_secret_access_key.blank? &&
+          GlobalSetting.respond_to?(:backup_uploads_to_s3_region) &&
+          !GlobalSetting.backup_uploads_to_s3_region.blank?
+        end
+      end
+
+      def self.backup_uploads_to_s3_bucket
+        "#{GlobalSetting.backup_uploads_to_s3_bucket.downcase}/#{RailsMultisite::ConnectionManagement.current_db}"
       end
 
       def self.plugin_store_key(upload_id)

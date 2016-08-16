@@ -34,9 +34,9 @@ describe Jobs::RemoveUploadFromS3 do
     s3_object = stub
 
     S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-    s3_bucket.expects(:object).with("tombstone/original/1X/#{upload.sha1}.png").returns(s3_object)
-    s3_object.expects(:copy_from).with(copy_source: "some-bucket/original/1X/#{upload.sha1}.png")
-    s3_bucket.expects(:object).with("original/1X/#{upload.sha1}.png").returns(s3_object)
+    s3_bucket.expects(:object).with("default/tombstone/original/1X/#{upload.sha1}.png").returns(s3_object)
+    s3_object.expects(:copy_from).with(copy_source: "some-bucket/default/original/1X/#{upload.sha1}.png")
+    s3_bucket.expects(:object).with("default/original/1X/#{upload.sha1}.png").returns(s3_object)
     s3_object.expects(:delete)
 
     Jobs::RemoveUploadFromS3.new.execute(
@@ -64,9 +64,9 @@ describe Jobs::RemoveUploadFromS3 do
       s3_object = stub
 
       S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-      s3_bucket.expects(:object).with("path/tombstone/original/1X/#{upload.sha1}.png").returns(s3_object)
-      s3_object.expects(:copy_from).with(copy_source: "some-bucket/path/original/1X/#{upload.sha1}.png")
-      s3_bucket.expects(:object).with("path/original/1X/#{upload.sha1}.png").returns(s3_object)
+      s3_bucket.expects(:object).with("path/default/tombstone/original/1X/#{upload.sha1}.png").returns(s3_object)
+      s3_object.expects(:copy_from).with(copy_source: "some-bucket/path/default/original/1X/#{upload.sha1}.png")
+      s3_bucket.expects(:object).with("path/default/original/1X/#{upload.sha1}.png").returns(s3_object)
       s3_object.expects(:delete)
 
       Jobs::RemoveUploadFromS3.new.execute(

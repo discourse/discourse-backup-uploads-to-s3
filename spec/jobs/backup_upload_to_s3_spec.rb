@@ -25,7 +25,7 @@ describe Jobs::BackupUploadToS3 do
       s3_helper.expects(:s3_bucket).returns(s3_bucket)
       s3_object = stub
 
-      s3_bucket.expects(:object).with("original/1X/#{upload.sha1}.png").returns(s3_object)
+      s3_bucket.expects(:object).with("default/original/1X/#{upload.sha1}.png").returns(s3_object)
       s3_object.expects(:upload_file)
 
       Jobs::BackupUploadToS3.new.backup_upload(store, fixture_file, upload)
@@ -33,7 +33,7 @@ describe Jobs::BackupUploadToS3 do
       expect(PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-      )).to eq("//some-bucket.s3.amazonaws.com/original/1X/#{upload.sha1}.png")
+      )).to eq("//some-bucket.s3.amazonaws.com/default/original/1X/#{upload.sha1}.png")
     end
 
     context "when bucket name contains folders path" do
@@ -45,7 +45,7 @@ describe Jobs::BackupUploadToS3 do
         s3_helper.expects(:s3_bucket).returns(s3_bucket)
         s3_object = stub
 
-        s3_bucket.expects(:object).with("path/original/1X/#{upload.sha1}.png").returns(s3_object)
+        s3_bucket.expects(:object).with("path/default/original/1X/#{upload.sha1}.png").returns(s3_object)
         s3_object.expects(:upload_file)
 
         Jobs::BackupUploadToS3.new.backup_upload(store, fixture_file, upload)
@@ -53,7 +53,7 @@ describe Jobs::BackupUploadToS3 do
         expect(PluginStore.get(
           DiscourseBackupUploadsToS3::PLUGIN_NAME,
           DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-        )).to eq("//some-bucket.s3.amazonaws.com/path/original/1X/#{upload.sha1}.png")
+        )).to eq("//some-bucket.s3.amazonaws.com/path/default/original/1X/#{upload.sha1}.png")
       end
     end
   end
