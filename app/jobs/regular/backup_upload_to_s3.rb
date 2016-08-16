@@ -6,8 +6,7 @@ module Jobs
       upload = Upload.find(args[:upload_id])
 
       if path = Discourse.store.path_for(upload)
-        store = ::DiscourseBackupUploadsToS3::Utils
-
+        store = ::DiscourseBackupUploadsToS3::Utils.s3_store
         File.open(path) { |file| backup_upload(store, file, upload) }
       end
     end
