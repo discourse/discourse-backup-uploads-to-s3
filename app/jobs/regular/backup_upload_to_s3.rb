@@ -6,18 +6,20 @@ module Jobs
       upload = Upload.find(args[:upload_id])
 
       if path = Discourse.store.path_for(upload)
-        store = ::FileStore::S3Store.new(DiscourseBackupUploadsToS3::S3Helper.helper)
+        store = ::DiscourseBackupUploadsToS3::Utils
 
-        File.open(path) do |file|
-          backup_url = store.store_upload(file, upload)
-
-          PluginStore.set(
-            DiscourseBackupUploadsToS3::PLUGIN_NAME,
-            DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id),
-            backup_url
-          )
-        end
+        File.open(path) { |file| backup_upload(store, file, upload) }
       end
+    end
+
+    def backup_upload(store, file, upload)
+      backup_url = store.store_upload(file, upload)
+
+      PluginStore.set(
+        DiscourseBackupUploadsToS3::PLUGIN_NAME,
+        DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id),
+        backup_url
+      )
     end
   end
 end

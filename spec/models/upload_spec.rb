@@ -10,6 +10,11 @@ describe Upload do
 
     DiscourseBackupUploadsToS3::Utils.expects(:backup_uploads_to_s3?)
       .returns(true).at_least_once
+
+    GlobalSetting.stubs(:backup_uploads_to_s3_bucket).returns('some-bucket')
+    GlobalSetting.stubs(:backup_uploads_to_s3_access_key_id).returns('some key')
+    GlobalSetting.stubs(:backup_uploads_to_s3_secret_access_key).returns('some secret key')
+    GlobalSetting.stubs(:backup_uploads_to_s3_region).returns('us-west-1')
   end
 
   after do

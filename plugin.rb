@@ -9,8 +9,12 @@ after_initialize do
   module ::DiscourseBackupUploadsToS3
     PLUGIN_NAME = 's3-backup-uploads'.freeze
 
-    class S3Helper
-      def self.helper
+    class Utils
+      def self.s3_store
+        FileStore::S3Store.new(s3_helper, GlobalSetting.backup_uploads_to_s3_bucket)
+      end
+
+      def self.s3_helper
         options = {
           region: GlobalSetting.backup_uploads_to_s3_region,
           access_key_id: GlobalSetting.backup_uploads_to_s3_access_key_id,
@@ -23,9 +27,7 @@ after_initialize do
           options
         )
       end
-    end
 
-    class Utils
       def self.backup_uploads_to_s3?
         GlobalSetting.respond_to?(:backup_uploads_to_s3_enabled) && GlobalSetting.backup_uploads_to_s3_enabled &&
         GlobalSetting.respond_to?(:backup_uploads_to_s3_bucket) && !GlobalSetting.backup_uploads_to_s3_bucket.blank? &&
@@ -49,11 +51,11 @@ after_initialize do
 
     after_destroy do
       if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3?
-        s3_helper = ::DiscourseBackupUploadsToS3::S3Helper.helper
+        s3_helper = ::DiscourseBackupUploadsToS3::Utils.s3_helper
 
         Jobs.enqueue(
           :remove_upload_from_s3,
-          path: FileStore::S3Store.new(s3_helper).get_path_for_upload(self),
+          path: ::DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self),
           upload_id: self.id
         )
       end
