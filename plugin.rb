@@ -49,9 +49,11 @@ after_initialize do
 
     after_destroy do
       if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3?
+        s3_helper = ::DiscourseBackupUploadsToS3::S3Helper.helper
+
         Jobs.enqueue(
           :remove_upload_from_s3,
-          path: FileStore::S3Store.new.get_path_for_upload(self),
+          path: FileStore::S3Store.new(s3_helper).get_path_for_upload(self),
           upload_id: self.id
         )
       end
