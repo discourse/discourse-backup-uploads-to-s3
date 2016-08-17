@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'sidekiq/testing'
 require 'file_store/s3_store'
 
 describe Jobs::RemoveUploadFromS3 do
@@ -11,6 +12,13 @@ describe Jobs::RemoveUploadFromS3 do
     GlobalSetting.stubs(:backup_uploads_to_s3_access_key_id).returns('some key')
     GlobalSetting.stubs(:backup_uploads_to_s3_secret_access_key).returns('some secret key')
     GlobalSetting.stubs(:backup_uploads_to_s3_region).returns('us-west-1')
+
+    @original_site_setting = SiteSetting.queue_jobs
+    SiteSetting.queue_jobs = true
+  end
+
+  after do
+    SiteSetting.queue_jobs = @original_site_setting
   end
 
   describe "when arguments is not valid" do

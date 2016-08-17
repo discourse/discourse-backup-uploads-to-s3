@@ -22,14 +22,10 @@ describe Upload do
   end
 
   it "should enqueue a job to backup upload to S3" do
-    Sidekiq::Testing.fake! do
-      expect { upload }.to change { ::Jobs::BackupUploadToS3.jobs.size }.by(1)
-    end
+    expect { upload }.to change { ::Jobs::BackupUploadToS3.jobs.size }.by(1)
   end
 
   it "should enqueue a job to remove upload from s3 when upload is destroyed" do
-    Sidekiq::Testing.fake! do
-      expect { upload.destroy }.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(1)
-    end
+    expect { upload.destroy }.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(1)
   end
 end

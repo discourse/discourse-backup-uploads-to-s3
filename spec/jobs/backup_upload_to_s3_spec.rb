@@ -18,7 +18,12 @@ describe Jobs::BackupUploadToS3 do
     GlobalSetting.stubs(:backup_uploads_to_s3_region).returns('us-west-1')
     GlobalSetting.stubs(:backup_uploads_to_s3_gnupg_public_key).returns('some public key')
 
+    @original_site_setting = SiteSetting.queue_jobs
     SiteSetting.queue_jobs = true
+  end
+
+  after do
+    SiteSetting.queue_jobs = @original_site_setting
   end
 
   it 'should raise an error if upload is not found' do
@@ -27,18 +32,16 @@ describe Jobs::BackupUploadToS3 do
 
   describe '#backup_upload' do
     it "should store the upload on to s3" do
-      Sidekiq::Testing.fake! do
-        S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-        s3_bucket.expects(:object).with("default/#{upload_path}").returns(s3_object)
-        s3_object.expects(:upload_file)
+      S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
+      s3_bucket.expects(:object).with("default/#{upload_path}.gpg").returns(s3_object)
+      s3_object.expects(:upload_file)
 
-        subject.backup_upload(fixture_file, upload_path, upload.id)
+      subject.backup_upload(fixture_file, upload)
 
-        expect(PluginStore.get(
-          DiscourseBackupUploadsToS3::PLUGIN_NAME,
-          DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-        )).to eq("//some-bucket.s3.amazonaws.com/default/#{upload_path}")
-      end
+      expect(PluginStore.get(
+        DiscourseBackupUploadsToS3::PLUGIN_NAME,
+        DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
+      )).to eq("//some-bucket.s3.amazonaws.com/default/#{upload_path}.gpg")
     end
 
     context "when bucket name contains folders path" do
@@ -47,18 +50,16 @@ describe Jobs::BackupUploadToS3 do
       end
 
       it "should store the upload on to s3" do
-        Sidekiq::Testing.fake! do
-          S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-          s3_bucket.expects(:object).with("path/default/#{upload_path}").returns(s3_object)
-          s3_object.expects(:upload_file)
+        S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
+        s3_bucket.expects(:object).with("path/default/#{upload_path}.gpg").returns(s3_object)
+        s3_object.expects(:upload_file)
 
-          subject.backup_upload(fixture_file, upload_path, upload.id)
+        subject.backup_upload(fixture_file, upload)
 
-          expect(PluginStore.get(
-            DiscourseBackupUploadsToS3::PLUGIN_NAME,
-            DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-          )).to eq("//some-bucket.s3.amazonaws.com/path/default/#{upload_path}")
-        end
+        expect(PluginStore.get(
+          DiscourseBackupUploadsToS3::PLUGIN_NAME,
+          DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
+        )).to eq("//some-bucket.s3.amazonaws.com/path/default/#{upload_path}.gpg")
       end
     end
   end
