@@ -6,6 +6,9 @@ after_initialize do
   load File.expand_path("../app/jobs/regular/backup_upload_to_s3.rb", __FILE__)
   load File.expand_path("../app/jobs/regular/remove_upload_from_s3.rb", __FILE__)
 
+  require_dependency "s3_helper"
+  require_dependency "file_store/s3_store"
+
   module ::DiscourseBackupUploadsToS3
     PLUGIN_NAME = 's3-backup-uploads'.freeze
 
@@ -21,7 +24,7 @@ after_initialize do
           secret_access_key: GlobalSetting.backup_uploads_to_s3_secret_access_key
         }
 
-        S3Helper.new(
+        ::S3Helper.new(
           backup_uploads_to_s3_bucket,
           ::FileStore::S3Store::TOMBSTONE_PREFIX,
           options
@@ -34,7 +37,8 @@ after_initialize do
           GlobalSetting.try(:backup_uploads_to_s3_bucket).presence &&
           GlobalSetting.try(:backup_uploads_to_s3_access_key_id).presence &&
           GlobalSetting.try(:backup_uploads_to_s3_secret_access_key).presence &&
-          GlobalSetting.try(:backup_uploads_to_s3_region).presence
+          GlobalSetting.try(:backup_uploads_to_s3_region).presence &&
+          GlobalSetting.try(:backup_uploads_to_s3_gnupg_public_key).presence
         end
       end
 
