@@ -6,19 +6,29 @@ describe DiscourseBackupUploadsToS3::FileEncryptor do
   subject { described_class.new(secret_key) }
 
   def encrypt_and_decrypt_file(file)
-    source = file.path
-    destination = "#{source}.enc"
+    begin
+      source = file.path
+      destination = "#{source}.enc"
 
-    subject.encrypt(source, destination)
+      subject.encrypt(source, destination)
 
-    decrypted_destination = "#{File.dirname(source)}/output"
-    subject.decrypt(destination, decrypted_destination)
+      decrypted_destination = "#{File.dirname(source)}/output"
+      subject.decrypt(destination, decrypted_destination)
 
-    expect(File.read(decrypted_destination)).to eq(file.read)
+      expect(File.read(decrypted_destination)).to eq(file.read)
+    ensure
+      File.delete(decrypted_destination) if File.exists?(decrypted_destination)
+    end
   end
 
-  it "should be able to encrypt and decrypt an image file correctly" do
-    encrypt_and_decrypt_file(file_from_fixtures("logo.png"))
+  it "should be able to encrypt and decrypt images correctly" do
+    small_file = file_from_fixtures("logo.png")
+    expect(small_file.size < described_class::BUFFER_SIZE).to eq(true)
+    encrypt_and_decrypt_file(small_file)
+
+    large_file = file_from_fixtures("large & unoptimized.png")
+    expect(large_file.size > described_class::BUFFER_SIZE).to eq(true)
+    encrypt_and_decrypt_file(large_file)
   end
 
   it "should be able to encrypt and decrypt a csv file correctly" do

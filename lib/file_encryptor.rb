@@ -5,7 +5,7 @@ module DiscourseBackupUploadsToS3
 
     # https://github.com/cryptosphere/rbnacl/blob/0ea0ee22668422ef600601c2dc3a19014c559e70/lib/rbnacl/simple_box.rb#L20-L22
     NOUCE_SIZE = 24
-    AUTHENTICATOR_SIZE = 14
+    AUTHENTICATOR_SIZE = 16
 
     def initialize(secret_key)
       @box = RbNaCl::SimpleBox.from_secret_key(Base64.decode64(secret_key))
