@@ -32,4 +32,11 @@ describe DiscourseBackupUploadsToS3::FileEncryptor do
   it "should be able to encrypt and decrypt a YAML file correctly" do
     encrypt_and_decrypt_file(file_from_fixtures("client.yml", "site_settings"))
   end
+
+  describe "#encrypt" do
+    it "yields a file that can be read" do
+      image = file_from_fixtures("logo.png")
+      subject.encrypt(image.path) { |enc_file| enc_file.read(1) }
+    end
+  end
 end

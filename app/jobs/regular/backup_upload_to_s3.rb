@@ -5,7 +5,7 @@ module Jobs
 
       if local_path = Discourse.store.path_for(upload)
         file_encryptor = DiscourseBackupUploadsToS3::FileEncryptor.new(
-          GlobalSetting.backup_uploads_to_s3_secret_key
+          GlobalSetting.backup_uploads_to_s3_encryption_key
         )
 
         path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.enc"

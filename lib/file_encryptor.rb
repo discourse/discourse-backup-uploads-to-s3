@@ -17,7 +17,7 @@ module DiscourseBackupUploadsToS3
           tmp_path = TMP_FOLDER.join(File.basename(source))
 
           File.open(source, 'rb') do |file|
-            File.open(tmp_path, 'wb') do |enc_file|
+            File.open(tmp_path, 'w+b') do |enc_file|
               while buffer = file.read(BUFFER_SIZE)
                 enc_file.write(box_encrypt(buffer))
               end
