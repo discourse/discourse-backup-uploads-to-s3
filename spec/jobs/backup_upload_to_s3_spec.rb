@@ -6,7 +6,6 @@ describe Jobs::BackupUploadToS3 do
   let(:upload_path) { "original/1X/#{upload.sha1}.png" }
   let(:s3_object) { stub }
   let(:s3_bucket) { stub }
-  let(:fixture_file) { file_from_fixtures("logo.png") }
 
   subject { Jobs::BackupUploadToS3.new }
 
@@ -16,7 +15,7 @@ describe Jobs::BackupUploadToS3 do
     GlobalSetting.stubs(:backup_uploads_to_s3_access_key_id).returns('some key')
     GlobalSetting.stubs(:backup_uploads_to_s3_secret_access_key).returns('some secret key')
     GlobalSetting.stubs(:backup_uploads_to_s3_region).returns('us-west-1')
-    GlobalSetting.stubs(:backup_uploads_to_s3_gnupg_public_key).returns('some public key')
+    GlobalSetting.stubs(:backup_uploads_to_s3_secret_key).returns('U6ocWTLaXcvIvX5nSCYch5jV02Z+H9YQXaaIo8aNV/E=\n')
 
     @original_site_setting = SiteSetting.queue_jobs
     SiteSetting.queue_jobs = true
@@ -32,16 +31,17 @@ describe Jobs::BackupUploadToS3 do
 
   describe '#backup_upload' do
     it "should store the upload on to s3" do
+      DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
       S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-      s3_bucket.expects(:object).with("default/#{upload_path}.gpg").returns(s3_object)
+      s3_bucket.expects(:object).with("default/#{upload_path}.enc").returns(s3_object)
       s3_object.expects(:upload_file)
 
-      subject.backup_upload(fixture_file, upload)
+      subject.execute(upload_id: upload.id)
 
       expect(PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-      )).to eq("//some-bucket.s3.amazonaws.com/default/#{upload_path}.gpg")
+      )).to eq("//some-bucket.s3.amazonaws.com/default/#{upload_path}.enc")
     end
 
     context "when bucket name contains folders path" do
@@ -50,16 +50,17 @@ describe Jobs::BackupUploadToS3 do
       end
 
       it "should store the upload on to s3" do
+        DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
         S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-        s3_bucket.expects(:object).with("path/default/#{upload_path}.gpg").returns(s3_object)
+        s3_bucket.expects(:object).with("path/default/#{upload_path}.enc").returns(s3_object)
         s3_object.expects(:upload_file)
 
-        subject.backup_upload(fixture_file, upload)
+        subject.execute(upload_id: upload.id)
 
         expect(PluginStore.get(
           DiscourseBackupUploadsToS3::PLUGIN_NAME,
           DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-        )).to eq("//some-bucket.s3.amazonaws.com/path/default/#{upload_path}.gpg")
+        )).to eq("//some-bucket.s3.amazonaws.com/path/default/#{upload_path}.enc")
       end
     end
   end

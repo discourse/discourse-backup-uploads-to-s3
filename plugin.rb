@@ -2,15 +2,21 @@
 # about: Backup uploads with encryption to a bucket on S3
 # version: 0.0.1
 
+gem 'rbnacl', '3.4.0', { require: false }
+gem 'rbnacl-libsodium', '1.0.10', { require: false }
+
 after_initialize do
   load File.expand_path("../app/jobs/regular/backup_upload_to_s3.rb", __FILE__)
   load File.expand_path("../app/jobs/regular/remove_upload_from_s3.rb", __FILE__)
 
   require_dependency "s3_helper"
   require_dependency "file_store/s3_store"
+  require 'rbnacl/libsodium'
 
   module ::DiscourseBackupUploadsToS3
     PLUGIN_NAME = 's3-backup-uploads'.freeze
+
+    autoload :FileEncryptor, "#{Rails.root}/plugins/discourse-backup-uploads-to-s3/lib/file_encryptor"
 
     class Utils
       def self.s3_store
@@ -38,7 +44,7 @@ after_initialize do
           GlobalSetting.try(:backup_uploads_to_s3_access_key_id).presence &&
           GlobalSetting.try(:backup_uploads_to_s3_secret_access_key).presence &&
           GlobalSetting.try(:backup_uploads_to_s3_region).presence &&
-          GlobalSetting.try(:backup_uploads_to_s3_gnupg_public_key).presence
+          GlobalSetting.try(:backup_uploads_to_s3_secret_key).presence
         end
       end
 
