@@ -19,21 +19,29 @@ after_initialize do
     autoload :FileEncryptor, "#{Rails.root}/plugins/discourse-backup-uploads-to-s3/lib/file_encryptor"
 
     class Utils
-      def self.s3_store
-        FileStore::S3Store.new(s3_helper, backup_uploads_to_s3_bucket)
+      def self.file_encryptor
+        DiscourseBackupUploadsToS3::FileEncryptor.new(
+          GlobalSetting.backup_uploads_to_s3_encryption_key
+        )
       end
 
-      def self.s3_helper
-        options = {
+      def self.s3_store
+        FileStore::S3Store.new(s3_helper)
+      end
+
+      def self.s3_options
+        {
           region: GlobalSetting.backup_uploads_to_s3_region,
           access_key_id: GlobalSetting.backup_uploads_to_s3_access_key_id,
           secret_access_key: GlobalSetting.backup_uploads_to_s3_secret_access_key
         }
+      end
 
+      def self.s3_helper
         ::S3Helper.new(
           backup_uploads_to_s3_bucket,
           ::FileStore::S3Store::TOMBSTONE_PREFIX,
-          options
+          s3_options
         )
       end
 
@@ -53,7 +61,7 @@ after_initialize do
       end
 
       def self.plugin_store_key(upload_id)
-        "backup-url-#{upload_id}"
+        "backup-path-#{upload_id}"
       end
     end
   end

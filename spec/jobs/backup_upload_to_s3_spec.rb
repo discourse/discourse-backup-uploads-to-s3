@@ -41,7 +41,7 @@ describe Jobs::BackupUploadToS3 do
       expect(PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-      )).to eq("//some-bucket.s3.amazonaws.com/default/#{upload_path}.enc")
+      )).to eq("some-bucket/default/#{upload_path}.enc")
     end
 
     context "when bucket name contains folders path" do
@@ -60,7 +60,7 @@ describe Jobs::BackupUploadToS3 do
         expect(PluginStore.get(
           DiscourseBackupUploadsToS3::PLUGIN_NAME,
           DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-        )).to eq("//some-bucket.s3.amazonaws.com/path/default/#{upload_path}.enc")
+        )).to eq("some-bucket/path/default/#{upload_path}.enc")
       end
     end
   end
