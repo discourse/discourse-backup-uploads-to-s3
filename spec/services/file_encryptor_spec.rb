@@ -22,13 +22,8 @@ describe DiscourseBackupUploadsToS3::FileEncryptor do
   end
 
   it "should be able to encrypt and decrypt images correctly" do
-    small_file = file_from_fixtures("logo.png")
-    expect(small_file.size < described_class::BUFFER_SIZE).to eq(true)
-    encrypt_and_decrypt_file(small_file)
-
-    large_file = file_from_fixtures("large & unoptimized.png")
-    expect(large_file.size > described_class::BUFFER_SIZE).to eq(true)
-    encrypt_and_decrypt_file(large_file)
+    encrypt_and_decrypt_file(file_from_fixtures("logo.png"))
+    encrypt_and_decrypt_file(file_from_fixtures("large & unoptimized.png"))
   end
 
   it "should be able to encrypt and decrypt a csv file correctly" do
