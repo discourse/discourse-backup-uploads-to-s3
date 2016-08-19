@@ -1,6 +1,7 @@
 namespace "backup_uploads_to_s3" do
   desc "Backfill uploads that are missing from S3 backups"
   task "backfill" => :environment do
+    puts RailsMultisite::ConnectionManagement.current_db
     if !DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3?
       puts "Plugin is not enabled."
       exit
@@ -20,7 +21,17 @@ namespace "backup_uploads_to_s3" do
       end
     end
 
-    puts ""
+    puts "Done!"
+  end
+
+  task "multisite:backfill" => :environment do
+    RailsMultisite::ConnectionManagement.each_connection do |db|
+      puts "Backfilling #{db}"
+      puts "---------------------------------\n"
+      t = Rake::Task["backup_uploads_to_s3:backfill"]
+      t.reenable
+      t.invoke
+    end
   end
 
   desc "Generate secret key for encryption"
