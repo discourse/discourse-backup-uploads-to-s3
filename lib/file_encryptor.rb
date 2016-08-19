@@ -4,7 +4,7 @@ module DiscourseBackupUploadsToS3
     BUFFER_SIZE = 4096
 
     # https://github.com/cryptosphere/rbnacl/blob/0ea0ee22668422ef600601c2dc3a19014c559e70/lib/rbnacl/simple_box.rb#L20-L22
-    NOUCE_SIZE = 24
+    NONCE_SIZE = 24
     AUTHENTICATOR_SIZE = 16
 
     def initialize(secret_key)
@@ -18,9 +18,9 @@ module DiscourseBackupUploadsToS3
 
           File.open(source, 'rb') do |file|
             File.open(tmp_path, 'w+b') do |enc_file|
-              while buffer = file.read(BUFFER_SIZE)
-                enc_file.write(box_encrypt(buffer))
-              end
+              # while buffer = file.read(BUFFER_SIZE)
+                enc_file.write(box_encrypt(file.read))
+              # end
 
               enc_file.rewind
               yield(enc_file)
@@ -32,9 +32,9 @@ module DiscourseBackupUploadsToS3
       else
         File.open(source, 'rb') do |file|
           File.open(destination, 'wb') do |enc_file|
-            while buffer = file.read(BUFFER_SIZE)
-              enc_file.write(box_encrypt(buffer))
-            end
+            # while buffer = file.read(BUFFER_SIZE)
+              enc_file.write(box_encrypt(file.read))
+            # end
           end
         end
       end
@@ -43,9 +43,9 @@ module DiscourseBackupUploadsToS3
     def decrypt(source, destination)
       File.open(source, 'rb') do |enc_file|
         File.open(destination, 'wb') do |file|
-          while buffer = enc_file.read(BUFFER_SIZE + NOUCE_SIZE + AUTHENTICATOR_SIZE)
-            file.write(box_decrypt(buffer))
-          end
+          # while buffer = enc_file.read(BUFFER_SIZE + NOUCE_SIZE + AUTHENTICATOR_SIZE)
+            file.write(box_decrypt(enc_file.read))
+          # end
         end
       end
     end
