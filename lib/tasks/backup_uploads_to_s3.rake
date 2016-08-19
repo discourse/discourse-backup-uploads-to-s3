@@ -8,6 +8,8 @@ namespace "backup_uploads_to_s3" do
 
     puts "Starting backfill of uploads backup to AWS S3. This may take awhile."
 
+    job = Jobs::BackupUploadToS3.new
+
     Upload.find_each do |upload|
       backup_url = PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
@@ -15,11 +17,11 @@ namespace "backup_uploads_to_s3" do
       )
 
       if !backup_url
-        printf "."
-        Jobs.enqueue(:backup_upload_to_s3, upload_id: upload.id)
+        putc "."
+        job.execute(upload_id: upload.id)
       end
     end
-
+    putc "\n"
     puts "Done!"
   end
 
