@@ -43,7 +43,7 @@ module DiscourseBackupUploadsToS3
     def decrypt(source, destination)
       File.open(source, 'rb') do |enc_file|
         File.open(destination, 'wb') do |file|
-          # while buffer = enc_file.read(BUFFER_SIZE + NOUCE_SIZE + AUTHENTICATOR_SIZE)
+          # while buffer = enc_file.read(BUFFER_SIZE + NONCE_SIZE + AUTHENTICATOR_SIZE)
             file.write(box_decrypt(enc_file.read))
           # end
         end
