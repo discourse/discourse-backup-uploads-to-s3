@@ -6,14 +6,16 @@ module DiscourseBackupUploadsToS3
       @box = RbNaCl::SimpleBox.from_secret_key(Base64.decode64(secret_key))
     end
 
-    def encrypt(source, destination=nil)
-      if !destination || block_given?
+    def encrypt(source, destination: nil, compress: false)
+      if !destination && block_given?
         begin
           tmp_path = TMP_FOLDER.join(File.basename(source))
 
           File.open(source, 'rb') do |file|
             File.open(tmp_path, 'w+b') do |enc_file|
-              enc_file.write(box_encrypt(file.read))
+              content = file.read
+              content = compress_content(content) if compress
+              enc_file.write(box_encrypt(content))
               enc_file.rewind
               yield(enc_file)
             end
@@ -24,28 +26,42 @@ module DiscourseBackupUploadsToS3
       else
         File.open(source, 'rb') do |file|
           File.open(destination, 'wb') do |enc_file|
-            enc_file.write(box_encrypt(file.read))
+            content = file.read
+            content = compress_content(content) if compress
+            enc_file.write(box_encrypt(content))
           end
         end
       end
     end
 
     def decrypt(source, destination)
+      compressed = (source =~ /\.gz\.?/) ? true : false
+
       File.open(source, 'rb') do |enc_file|
         File.open(destination, 'wb') do |file|
-          file.write(box_decrypt(enc_file.read))
+          content = box_decrypt(enc_file.read)
+          content = decompress_content(content) if compressed
+          file.write(content)
         end
       end
     end
 
     private
 
-    def box_encrypt(text)
-      @box.encrypt(text)
+    def compress_content(content)
+      ActiveSupport::Gzip.compress(content)
     end
 
-    def box_decrypt(text)
-      @box.decrypt(text)
+    def decompress_content(content)
+      ActiveSupport::Gzip.decompress(content)
+    end
+
+    def box_encrypt(content)
+      @box.encrypt(content)
+    end
+
+    def box_decrypt(content)
+      @box.decrypt(content)
     end
   end
 end
