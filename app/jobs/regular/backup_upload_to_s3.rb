@@ -4,7 +4,7 @@ module Jobs
       upload = Upload.find(args[:upload_id])
 
       if local_path = Discourse.store.path_for(upload)
-        path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.enc"
+        path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.gz.enc"
         s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
 
         DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: true) do |enc_file|
