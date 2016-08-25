@@ -33,7 +33,7 @@ describe Jobs::BackupUploadToS3 do
     it "should store the upload on to s3" do
       DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
       S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-      s3_bucket.expects(:object).with("default/#{upload_path}.enc").returns(s3_object)
+      s3_bucket.expects(:object).with("default/#{upload_path}.gz.enc").returns(s3_object)
       s3_object.expects(:upload_file)
 
       subject.execute(upload_id: upload.id)
@@ -41,7 +41,7 @@ describe Jobs::BackupUploadToS3 do
       expect(PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-      )).to eq("some-bucket/default/#{upload_path}.enc")
+      )).to eq("some-bucket/default/#{upload_path}.gz.enc")
     end
 
     context "when bucket name contains folders path" do
@@ -52,7 +52,7 @@ describe Jobs::BackupUploadToS3 do
       it "should store the upload on to s3" do
         DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
         S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-        s3_bucket.expects(:object).with("path/default/#{upload_path}.enc").returns(s3_object)
+        s3_bucket.expects(:object).with("path/default/#{upload_path}.gz.enc").returns(s3_object)
         s3_object.expects(:upload_file)
 
         subject.execute(upload_id: upload.id)
@@ -60,7 +60,7 @@ describe Jobs::BackupUploadToS3 do
         expect(PluginStore.get(
           DiscourseBackupUploadsToS3::PLUGIN_NAME,
           DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-        )).to eq("some-bucket/path/default/#{upload_path}.enc")
+        )).to eq("some-bucket/path/default/#{upload_path}.gz.enc")
       end
     end
   end
