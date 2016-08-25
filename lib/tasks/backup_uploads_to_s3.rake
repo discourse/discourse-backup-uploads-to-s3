@@ -12,7 +12,7 @@ namespace "backup_uploads_to_s3" do
     pool = Concurrent::FixedThreadPool.new(ENV["RESTORE_THREAD_POOL_SIZE"] || 1)
     futures = []
 
-    Upload.order("created_at DESC").find_each do |upload|
+    Upload.find_each do |upload|
       backup_url = PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id),
@@ -49,7 +49,7 @@ namespace "backup_uploads_to_s3" do
     pool = Concurrent::FixedThreadPool.new(ENV["RESTORE_THREAD_POOL_SIZE"] || 1)
     futures = []
 
-    Upload.order("created_at DESC").find_each do |upload|
+    Upload.find_each do |upload|
       local_path = store.path_for(upload)
 
       if !File.exists?(local_path)
