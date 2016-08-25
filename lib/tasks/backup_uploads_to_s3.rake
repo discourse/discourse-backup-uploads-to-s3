@@ -10,7 +10,7 @@ namespace "backup_uploads_to_s3" do
 
     job = Jobs::BackupUploadToS3.new
 
-    Upload.find_each do |upload|
+    Upload.order("created_at DESC").find_each do |upload|
       backup_url = PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id),
@@ -37,7 +37,7 @@ namespace "backup_uploads_to_s3" do
     file_encryptor = DiscourseBackupUploadsToS3::Utils.file_encryptor
     resource = Aws::S3::Resource.new(DiscourseBackupUploadsToS3::Utils.s3_options)
 
-    Upload.find_each do |upload|
+    Upload.order("created_at DESC").find_each do |upload|
       local_path = store.path_for(upload)
 
       if !File.exists?(local_path)
