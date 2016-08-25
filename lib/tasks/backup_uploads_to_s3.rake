@@ -10,7 +10,7 @@ namespace "backup_uploads_to_s3" do
 
     job = Jobs::BackupUploadToS3.new
 
-    Upload.order("created_at DESC").find_each do |upload|
+    Upload.find_each do |upload|
       backup_url = PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id),
@@ -37,9 +37,7 @@ namespace "backup_uploads_to_s3" do
     file_encryptor = DiscourseBackupUploadsToS3::Utils.file_encryptor
     resource = Aws::S3::Resource.new(DiscourseBackupUploadsToS3::Utils.s3_options)
 
-    futures = []
-
-    Upload.order("created_at DESC").find_each do |upload|
+    Upload.find_each do |upload|
       local_path = store.path_for(upload)
 
       if !File.exists?(local_path)
@@ -51,29 +49,24 @@ namespace "backup_uploads_to_s3" do
         if backup_path
           bucket_name, file_path = backup_path.split("/", 2)
 
-          futures << Concurrent::Future.execute do
-            begin
-              putc "."
-              tempfile = Tempfile.new
-              resource.bucket(bucket_name).object(file_path).get(response_target: tempfile.path)
-              FileUtils.mkdir_p(File.dirname(local_path))
-              file_encryptor.decrypt(tempfile.path, local_path)
-            rescue Aws::S3::Errors::NoSuchBucket
-              puts "AWS S3 Bucket '#{bucket_name}' does not exist."
-            rescue Aws::S3::Errors::NoSuchKey
-              puts "File '#{file_path}' does not exists in AWS S3 Bucket '#{bucket_name}'."
-            ensure
-              tempfile.delete if tempfile
-            end
+          begin
+            putc "."
+            tempfile = Tempfile.new
+            resource.bucket(bucket_name).object(file_path).get(response_target: tempfile.path)
+            FileUtils.mkdir_p(File.dirname(local_path))
+            file_encryptor.decrypt(tempfile.path, local_path)
+          rescue Aws::S3::Errors::NoSuchBucket
+            puts "AWS S3 Bucket '#{bucket_name}' does not exist."
+          rescue Aws::S3::Errors::NoSuchKey
+            puts "File '#{file_path}' does not exists in AWS S3 Bucket '#{bucket_name}'."
+          ensure
+            tempfile.delete if tempfile
           end
         else
           puts "AWS S3 path for upload #{local_path} not found. Skipping..."
         end
       end
     end
-
-    futures.each(&:wait!)
-
     putc "\n"
 
     puts "Regenerating optimized images..."
