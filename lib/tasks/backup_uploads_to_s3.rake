@@ -9,6 +9,8 @@ namespace "backup_uploads_to_s3" do
     puts "Starting backfill of uploads backup to AWS S3. This may take awhile."
 
     job = Jobs::BackupUploadToS3.new
+    pool = Concurrent::FixedThreadPool.new(ENV["RESTORE_THREAD_POOL_SIZE"] || 1)
+    futures = []
 
     Upload.order("created_at DESC").find_each do |upload|
       backup_url = PluginStore.get(
@@ -17,10 +19,15 @@ namespace "backup_uploads_to_s3" do
       )
 
       if !backup_url
-        putc "."
-        job.execute(upload_id: upload.id)
+        futures << Concurrent::Future.execute do
+          putc "."
+          job.execute(upload_id: upload.id)
+        end
       end
     end
+
+    futures.each(&:wait!)
+
     putc "\n"
     puts "Done!"
   end
