@@ -12,14 +12,14 @@ module DiscourseBackupUploadsToS3
           tmp_path = TMP_FOLDER.join(File.basename(source))
 
           File.open(source, 'rb') do |file|
-            File.open(tmp_path, 'w+b') do |enc_file|
+            File.open(tmp_path, 'wb') do |enc_file|
               content = file.read
               content = compress_content(content) if compress
               enc_file.write(box_encrypt(content))
-              enc_file.rewind
-              yield(enc_file)
             end
           end
+
+          yield(tmp_path)
         ensure
           File.delete(tmp_path) if File.exists?(tmp_path)
         end

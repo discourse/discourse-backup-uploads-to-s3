@@ -7,8 +7,8 @@ module Jobs
         path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.gz.enc"
         s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
 
-        DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: true) do |enc_file|
-          path = s3_helper.upload(enc_file, path)
+        DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: true) do |tmp_path|
+          path = s3_helper.upload(tmp_path, path)
         end
 
         PluginStore.set(
