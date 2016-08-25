@@ -1,9 +1,9 @@
 module Jobs
   class BackupUploadToS3 < Jobs::Base
     def execute(args)
-      upload = Upload.find(args[:upload_id])
+      upload = Upload.find_by(id: args[:upload_id])
 
-      if local_path = Discourse.store.path_for(upload)
+      if upload && local_path = Discourse.store.path_for(upload)
         path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.gz.enc"
         s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
 

@@ -25,8 +25,13 @@ describe Jobs::BackupUploadToS3 do
     SiteSetting.queue_jobs = @original_site_setting
   end
 
-  it 'should raise an error if upload is not found' do
-    expect { subject.execute(upload_id: -1) }.to raise_error(ActiveRecord::RecordNotFound)
+  it 'should not do anything if upload is not found' do
+    subject.execute(upload_id: -1)
+
+    expect(PluginStore.get(
+      DiscourseBackupUploadsToS3::PLUGIN_NAME,
+      DiscourseBackupUploadsToS3::Utils.plugin_store_key(-1)
+    )).to eq(nil)
   end
 
   describe '#backup_upload' do
