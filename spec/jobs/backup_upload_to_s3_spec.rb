@@ -2,7 +2,13 @@ require 'rails_helper'
 require 'sidekiq/testing'
 
 describe Jobs::BackupUploadToS3 do
-  let(:upload) { Fabricate(:upload) }
+  let(:user) { Fabricate(:user) }
+  let(:file) { file_from_fixtures("logo.png") }
+
+  let(:upload) do
+    Upload.create_for(user.id, file, "logo.png", File.size(file))
+  end
+
   let(:upload_path) { "original/1X/#{upload.sha1}.png" }
   let(:s3_object) { stub }
   let(:s3_bucket) { stub }
@@ -31,6 +37,16 @@ describe Jobs::BackupUploadToS3 do
     expect(PluginStore.get(
       DiscourseBackupUploadsToS3::PLUGIN_NAME,
       DiscourseBackupUploadsToS3::Utils.plugin_store_key(-1)
+    )).to eq(nil)
+  end
+
+  it 'should not do anything if file is not found' do
+    upload = Fabricate(:upload)
+    subject.execute(upload_id: upload.id)
+
+    expect(PluginStore.get(
+      DiscourseBackupUploadsToS3::PLUGIN_NAME,
+      DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
     )).to eq(nil)
   end
 
