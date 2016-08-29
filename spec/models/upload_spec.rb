@@ -4,28 +4,51 @@ require 'sidekiq/testing'
 describe Upload do
   let(:upload) { Fabricate(:upload) }
 
-  before do
-    @original_site_setting = SiteSetting.queue_jobs
-    SiteSetting.queue_jobs = true
+  context "scopes" do
+    describe '#not_backuped' do
+      let(:upload2) { Fabricate(:upload) }
 
-    DiscourseBackupUploadsToS3::Utils.expects(:backup_uploads_to_s3?)
-      .returns(true).at_least_once
+      it 'should return the right records' do
+        upload
 
-    GlobalSetting.stubs(:backup_uploads_to_s3_bucket).returns('some-bucket')
-    GlobalSetting.stubs(:backup_uploads_to_s3_access_key_id).returns('some key')
-    GlobalSetting.stubs(:backup_uploads_to_s3_secret_access_key).returns('some secret key')
-    GlobalSetting.stubs(:backup_uploads_to_s3_region).returns('us-west-1')
+        PluginStore.set(
+          DiscourseBackupUploadsToS3::PLUGIN_NAME,
+          DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload2.id),
+          "some_path"
+        )
+
+        uploads = Upload.not_backuped.to_a
+
+        expect(uploads).to_not include(upload2)
+        expect(uploads).to include(upload)
+      end
+    end
   end
 
-  after do
-    SiteSetting.queue_jobs = @original_site_setting
-  end
+  context 'callbacks' do
+    before do
+      @original_site_setting = SiteSetting.queue_jobs
+      SiteSetting.queue_jobs = true
 
-  it "should enqueue a job to backup upload to S3" do
-    expect { upload }.to change { ::Jobs::BackupUploadToS3.jobs.size }.by(1)
-  end
+      DiscourseBackupUploadsToS3::Utils.expects(:backup_uploads_to_s3?)
+        .returns(true).at_least_once
 
-  it "should enqueue a job to remove upload from s3 when upload is destroyed" do
-    expect { upload.destroy }.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(1)
+      GlobalSetting.stubs(:backup_uploads_to_s3_bucket).returns('some-bucket')
+      GlobalSetting.stubs(:backup_uploads_to_s3_access_key_id).returns('some key')
+      GlobalSetting.stubs(:backup_uploads_to_s3_secret_access_key).returns('some secret key')
+      GlobalSetting.stubs(:backup_uploads_to_s3_region).returns('us-west-1')
+    end
+
+    after do
+      SiteSetting.queue_jobs = @original_site_setting
+    end
+
+    it "should enqueue a job to backup upload to S3" do
+      expect { upload }.to change { ::Jobs::BackupUploadToS3.jobs.size }.by(1)
+    end
+
+    it "should enqueue a job to remove upload from s3 when upload is destroyed" do
+      expect { upload.destroy }.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(1)
+    end
   end
 end

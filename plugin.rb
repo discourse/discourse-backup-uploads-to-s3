@@ -60,13 +60,24 @@ after_initialize do
         "#{GlobalSetting.backup_uploads_to_s3_bucket.downcase}/#{RailsMultisite::ConnectionManagement.current_db}"
       end
 
+      PLUGIN_STORE_KEY_PREFIX = 'backup-path-'.freeze
+
       def self.plugin_store_key(upload_id)
-        "backup-path-#{upload_id}"
+        "#{PLUGIN_STORE_KEY_PREFIX}#{upload_id}"
       end
     end
   end
 
   Upload.class_eval do
+    scope :not_backuped, -> {
+      joins(
+        "LEFT JOIN plugin_store_rows
+        ON plugin_store_rows.plugin_name = '#{DiscourseBackupUploadsToS3::PLUGIN_NAME}'
+        AND CONCAT('#{DiscourseBackupUploadsToS3::Utils::PLUGIN_STORE_KEY_PREFIX}', uploads.id) = plugin_store_rows.key"
+      )
+      .where("plugin_store_rows.id IS NULL")
+    }
+
     after_commit do
       if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3?
         Jobs.enqueue(:backup_upload_to_s3, upload_id: self.id)
@@ -79,6 +90,23 @@ after_initialize do
           :remove_upload_from_s3,
           path: ::DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self),
           upload_id: self.id
+        )
+      end
+    end
+
+    def backup_to_s3
+      if (local_path = Discourse.store.path_for(self)) && File.exist?(local_path)
+        path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self)}.gz.enc"
+        s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
+
+        DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: true) do |tmp_path|
+          path = s3_helper.upload(tmp_path, path)
+        end
+
+        PluginStore.set(
+          DiscourseBackupUploadsToS3::PLUGIN_NAME,
+          DiscourseBackupUploadsToS3::Utils.plugin_store_key(self.id),
+          "#{s3_helper.s3_bucket_name}/#{path}"
         )
       end
     end

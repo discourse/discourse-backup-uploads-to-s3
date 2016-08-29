@@ -10,16 +10,9 @@ namespace "backup_uploads_to_s3" do
 
     job = Jobs::BackupUploadToS3.new
 
-    Upload.find_each do |upload|
-      backup_url = PluginStore.get(
-        DiscourseBackupUploadsToS3::PLUGIN_NAME,
-        DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id),
-      )
-
-      if !backup_url
-        putc "."
-        job.execute(upload_id: upload.id)
-      end
+    Upload.not_backuped.find_each do |upload|
+      putc "."
+      upload.backup_to_s3
     end
 
     putc "\n"
