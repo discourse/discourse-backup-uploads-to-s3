@@ -8,6 +8,8 @@ gem 'rbnacl-libsodium', '1.0.10', { require: false }
 after_initialize do
   load File.expand_path("../app/jobs/regular/backup_upload_to_s3.rb", __FILE__)
   load File.expand_path("../app/jobs/regular/remove_upload_from_s3.rb", __FILE__)
+  load File.expand_path("../app/jobs/scheduled/backfill_uploads_backup.rb", __FILE__)
+  load File.expand_path("../app/jobs/scheduled/purge_deleted_uploads_backup.rb", __FILE__)
 
   require_dependency "s3_helper"
   require_dependency "file_store/s3_store"
