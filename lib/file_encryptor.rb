@@ -9,7 +9,8 @@ module DiscourseBackupUploadsToS3
     def encrypt(source, destination: nil, compress: false)
       if !destination && block_given?
         begin
-          tmp_path = TMP_FOLDER.join(File.basename(source))
+          tmp_file = Tempfile.new(File.basename(source))
+          tmp_path = Pathname.new(tmp_file.path)
 
           File.open(source, 'rb') do |file|
             File.open(tmp_path, 'wb') do |enc_file|

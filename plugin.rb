@@ -97,19 +97,21 @@ after_initialize do
     end
 
     def backup_to_s3
-      if (local_path = Discourse.store.path_for(self)) && File.exist?(local_path)
-        path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self)}.gz.enc"
-        s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
+      DistributedMutex.synchronize("upload_backup_to_s3_#{self.id}") do
+        if (local_path = Discourse.store.path_for(self)) && File.exist?(local_path)
+          path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self)}.gz.enc"
+          s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
 
-        DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: true) do |tmp_path|
-          path = s3_helper.upload(tmp_path, path)
+          DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: true) do |tmp_path|
+            path = s3_helper.upload(tmp_path, path)
+          end
+
+          PluginStore.set(
+            DiscourseBackupUploadsToS3::PLUGIN_NAME,
+            DiscourseBackupUploadsToS3::Utils.plugin_store_key(self.id),
+            "#{s3_helper.s3_bucket_name}/#{path}"
+          )
         end
-
-        PluginStore.set(
-          DiscourseBackupUploadsToS3::PLUGIN_NAME,
-          DiscourseBackupUploadsToS3::Utils.plugin_store_key(self.id),
-          "#{s3_helper.s3_bucket_name}/#{path}"
-        )
       end
     end
   end
