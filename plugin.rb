@@ -1,6 +1,7 @@
 # name: discourse-backup-uploads-to-s3
 # about: Backup uploads with encryption to a bucket on S3
 # version: 0.0.1
+# url: https://github.com/discourse/discourse-backup-uploads-to-s3
 
 gem 'rbnacl', '3.4.0', { require: false }
 gem 'rbnacl-libsodium', '1.0.10', { require: false }
