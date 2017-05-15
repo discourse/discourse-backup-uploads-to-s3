@@ -6,7 +6,7 @@ describe Jobs::BackupUploadToS3 do
   let(:file) { file_from_fixtures("logo.png") }
 
   let(:upload) do
-    Upload.create_for(user.id, file, "logo.png", File.size(file))
+    UploadCreator.new(file, "logo.png").create_for(user.id)
   end
 
   let(:upload_path) { "original/1X/#{upload.sha1}.png" }
