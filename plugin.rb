@@ -3,8 +3,8 @@
 # version: 0.0.1
 # url: https://github.com/discourse/discourse-backup-uploads-to-s3
 
-gem 'rbnacl', '3.4.0', { require: false }
-gem 'rbnacl-libsodium', '1.0.10', { require: false }
+gem 'rbnacl', '3.4.0', require: false
+gem 'rbnacl-libsodium', '1.0.10', require: false
 
 after_initialize do
   load File.expand_path("../app/jobs/regular/backup_upload_to_s3.rb", __FILE__)
@@ -78,7 +78,7 @@ after_initialize do
         ON plugin_store_rows.plugin_name = '#{DiscourseBackupUploadsToS3::PLUGIN_NAME}'
         AND CONCAT('#{DiscourseBackupUploadsToS3::Utils::PLUGIN_STORE_KEY_PREFIX}', uploads.id) = plugin_store_rows.key"
       )
-      .where("plugin_store_rows.id IS NULL")
+        .where("plugin_store_rows.id IS NULL")
     }
 
     after_commit do
