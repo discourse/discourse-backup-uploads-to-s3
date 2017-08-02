@@ -1,5 +1,7 @@
 module Jobs
   class RemoveUploadFromS3 < Jobs::Base
+    sidekiq_options queue: 'low'
+
     def execute(args)
       upload_id = check_args(args, :upload_id)
       path = check_args(args, :path)
