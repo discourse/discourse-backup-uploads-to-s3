@@ -82,7 +82,7 @@ after_initialize do
     }
 
     after_commit do
-      if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3?
+      if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3? && sha1_changed?
         Jobs.enqueue(:backup_upload_to_s3, upload_id: self.id)
       end
     end

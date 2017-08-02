@@ -47,6 +47,16 @@ describe Upload do
       expect { upload }.to change { ::Jobs::BackupUploadToS3.jobs.size }.by(1)
     end
 
+    it "should only enqueue a job to backup upload to s3 when sha1 has changed" do
+      upload
+
+      expect { upload.update!(original_filename: 'test.png') }
+        .to_not change { ::Jobs::BackupUploadToS3.jobs.size }
+
+      expect { upload.update!(sha1: 'asdlkjasd') }
+        .to change { ::Jobs::BackupUploadToS3.jobs.size }.by(1)
+    end
+
     it "should enqueue a job to remove upload from s3 when upload is destroyed" do
       expect { upload.destroy }.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(1)
     end
