@@ -8,11 +8,14 @@ namespace "backup_uploads_to_s3" do
 
     puts "Starting backfill of uploads backup to AWS S3. This may take awhile."
 
-    job = Jobs::BackupUploadToS3.new
+    s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
 
-    Upload.not_backuped.find_each do |upload|
-      putc "."
+    Upload.find_each do |upload|
+      path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.gz.enc"
+      object = s3_helper.object(path)
+      next if object.exists? && object.content_length != 0
       upload.backup_to_s3
+      putc "."
     end
 
     putc "\n"

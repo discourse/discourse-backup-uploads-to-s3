@@ -71,6 +71,11 @@ after_initialize do
     end
   end
 
+  add_to_class(:s3_helper, :object) do |path|
+    path = get_path_for_s3_upload(path)
+    s3_bucket.object(path)
+  end
+
   Upload.class_eval do
     scope :not_backuped, -> {
       joins(
@@ -78,7 +83,7 @@ after_initialize do
         ON plugin_store_rows.plugin_name = '#{DiscourseBackupUploadsToS3::PLUGIN_NAME}'
         AND CONCAT('#{DiscourseBackupUploadsToS3::Utils::PLUGIN_STORE_KEY_PREFIX}', uploads.id) = plugin_store_rows.key"
       )
-        .where("plugin_store_rows.id IS NULL")
+      .where("plugin_store_rows.id IS NULL")
     }
 
     after_commit do
