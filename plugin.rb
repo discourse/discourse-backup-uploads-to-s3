@@ -83,7 +83,7 @@ after_initialize do
         ON plugin_store_rows.plugin_name = '#{DiscourseBackupUploadsToS3::PLUGIN_NAME}'
         AND CONCAT('#{DiscourseBackupUploadsToS3::Utils::PLUGIN_STORE_KEY_PREFIX}', uploads.id) = plugin_store_rows.key"
       )
-      .where("plugin_store_rows.id IS NULL")
+        .where("plugin_store_rows.id IS NULL")
     }
 
     after_commit do
