@@ -84,13 +84,6 @@ namespace "backup_uploads_to_s3" do
     end
 
     futures.each(&:wait!)
-
-    putc "\n"
-
-    puts "Regenerating optimized images..."
-    t = Rake::Task["uploads:regenerate_missing_optimized"]
-    t.reenable
-    t.invoke
   end
 
   task "multisite:restore" => :environment do
