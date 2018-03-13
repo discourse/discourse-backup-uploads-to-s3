@@ -47,7 +47,7 @@ namespace "backup_uploads_to_s3" do
       scope.find_each do |upload|
         local_path = store.path_for(upload)
 
-        if !File.exists?(local_path)
+        if local_path && !File.exists?(local_path)
           backup_path = PluginStore.get(
             DiscourseBackupUploadsToS3::PLUGIN_NAME,
             DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
@@ -79,6 +79,8 @@ namespace "backup_uploads_to_s3" do
           else
             puts "AWS S3 path for upload #{local_path} not found. Skipping..."
           end
+        else
+          puts "Upload does not have a local path. Skipping..."
         end
       end
     end
