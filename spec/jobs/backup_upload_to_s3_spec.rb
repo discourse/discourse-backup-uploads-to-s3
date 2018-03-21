@@ -54,7 +54,7 @@ describe Jobs::BackupUploadToS3 do
     it "should store the upload on to s3" do
       DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
       S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-      s3_bucket.expects(:object).with("default/#{upload_path}.gz.enc").returns(s3_object)
+      s3_bucket.expects(:object).with("default/#{upload_path}.enc").returns(s3_object)
       s3_object.expects(:upload_file)
 
       subject.execute(upload_id: upload.id)
@@ -62,7 +62,36 @@ describe Jobs::BackupUploadToS3 do
       expect(PluginStore.get(
         DiscourseBackupUploadsToS3::PLUGIN_NAME,
         DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-      )).to eq("some-bucket/default/#{upload_path}.gz.enc")
+      )).to eq("some-bucket/default/#{upload_path}.enc")
+    end
+
+    context 'when upload is not an image' do
+      let(:file) { File.new("#{Rails.root}/spec/fixtures/csv/discourse.csv") }
+
+      let(:upload) do
+        UploadCreator.new(file, "discourse.csv").create_for(user.id)
+      end
+
+      let(:upload_path) { "original/1X/#{upload.sha1}.csv" }
+
+      it 'should compress and store the upload on to s3' do
+        SiteSetting.authorized_extensions = 'csv'
+
+        DiscourseBackupUploadsToS3::FileEncryptor
+          .any_instance.stubs(:encrypt)
+          .yields(file)
+
+        S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
+        s3_bucket.expects(:object).with("default/#{upload_path}.gz.enc").returns(s3_object)
+        s3_object.expects(:upload_file)
+
+        subject.execute(upload_id: upload.id)
+
+        expect(PluginStore.get(
+          DiscourseBackupUploadsToS3::PLUGIN_NAME,
+          DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
+        )).to eq("some-bucket/default/#{upload_path}.gz.enc")
+      end
     end
 
     context "when bucket name contains folders path" do
@@ -73,7 +102,7 @@ describe Jobs::BackupUploadToS3 do
       it "should store the upload on to s3" do
         DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
         S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-        s3_bucket.expects(:object).with("path/default/#{upload_path}.gz.enc").returns(s3_object)
+        s3_bucket.expects(:object).with("path/default/#{upload_path}.enc").returns(s3_object)
         s3_object.expects(:upload_file)
 
         subject.execute(upload_id: upload.id)
@@ -81,7 +110,7 @@ describe Jobs::BackupUploadToS3 do
         expect(PluginStore.get(
           DiscourseBackupUploadsToS3::PLUGIN_NAME,
           DiscourseBackupUploadsToS3::Utils.plugin_store_key(upload.id)
-        )).to eq("some-bucket/path/default/#{upload_path}.gz.enc")
+        )).to eq("some-bucket/path/default/#{upload_path}.enc")
       end
     end
   end
