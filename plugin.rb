@@ -106,7 +106,14 @@ after_initialize do
       DistributedMutex.synchronize("upload_backup_to_s3_#{self.id}") do
         if (local_path = Discourse.store.path_for(self)) && File.exist?(local_path)
           s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
-          compress = !FileHelper.is_image?(File.basename(local_path))
+
+          compress =
+            if FileHelper.respond_to?(:is_supported_image?)
+              !FileHelper.is_supported_image?(File.basename(local_path))
+            else
+              !FileHelper.is_image?(File.basename(local_path))
+            end
+
           path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self)}#{compress ? '.gz' : ''}.enc"
 
           DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: compress) do |tmp_path|
