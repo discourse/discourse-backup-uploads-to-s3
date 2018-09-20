@@ -112,4 +112,84 @@ namespace "backup_uploads_to_s3" do
   task "generate_secret_key" => :environment do
     puts Base64.encode64(RbNaCl::Random.random_bytes(RbNaCl::SecretBox.key_bytes))
   end
+
+  desc "Recover missing uploads from the backup on S3"
+  task "recover_missing_uploads" => :environment do
+    RailsMultisite::ConnectionManagement.each_connection do |db|
+      puts "Recoverying #{db}"
+      puts "---------------------------------\n"
+
+      object_keys = begin
+        s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
+
+        s3_helper.list("original").map(&:key).concat(
+          s3_helper.list("#{FileStore::S3Store::TOMBSTONE_PREFIX}original").map(&:key)
+        )
+      end
+
+      Post.where("raw LIKE '%upload:\/\/%' OR raw LIKE '%href=%'").find_each do |post|
+        analyzer = PostAnalyzer.new(post.raw, post.topic_id)
+        file_encryptor = DiscourseBackupUploadsToS3::Utils.file_encryptor
+
+        analyzer.cooked_stripped.css("a", "img").each do |media|
+          sha1 =
+            if media.name == "a"
+              if href = media["href"] && data = Upload.extract_upload_url(href)
+                data[2]
+              end
+            elsif media.name == 'img'
+              if dom_class = media["class"] &&
+                 (Post.white_listed_image_classes & dom_class.split).count > 0
+
+                next
+              end
+
+              if orig_src = media["data-orig-src"]
+                Upload.sha1_from_short_url(orig_src)
+              end
+            end
+
+          if sha1 && sha1.length == Upload::SHA1_LENGTH
+            unless upload = Upload.find_by(sha1: sha1)
+              object_keys.each do |key|
+                if key =~ /#{sha1}/
+                  puts "#{post.full_url} restoring #{key}"
+
+                  tmp_directory = Rails.root.join("tmp", "upload_restores")
+                  FileUtils.mkdir_p(tmp_directory)
+                  tmp_path = File.join(tmp_directory, File.basename(key))
+
+                  File.open(tmp_path, 'wb') do |file|
+                    Aws::S3::Resource.new(DiscourseBackupUploadsToS3::Utils.s3_options)
+                      .bucket(GlobalSetting.backup_uploads_to_s3_bucket.downcase)
+                      .object(key)
+                      .get(response_target: file)
+                  end
+
+                  key = key.sub(".gz.enc", "")
+                  key = key.sub(".enc", "")
+
+                  new_path = Rails.root.join(
+                    "public",
+                    "uploads",
+                    "tombstone",
+                    key
+                  )
+
+                  file_encryptor.decrypt(tmp_path, new_path)
+
+                  if File.size(new_path) == 0
+                    puts "File is empty #{new_path}"
+                    File.delete(new_path)
+                  end
+                end
+              end
+            end
+          end
+        end
+      rescue MiniRacer::ScriptTerminatedError, MiniRacer::RuntimeError => e
+        puts "#{e.class} #{post.full_url}"
+      end
+    end
+  end
 end
