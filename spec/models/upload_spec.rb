@@ -59,6 +59,14 @@ describe Upload do
 
     it "should enqueue a job to remove upload from s3 when upload is destroyed" do
       expect { upload.destroy }.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(1)
+
+      args = Jobs::RemoveUploadFromS3.jobs.first["args"].first
+
+      expect(args["upload_id"]).to eq(upload.id)
+
+      expect(args["path"]).to eq(
+        "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.enc"
+      )
     end
   end
 end

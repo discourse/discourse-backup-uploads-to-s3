@@ -96,28 +96,42 @@ after_initialize do
       if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3?
         Jobs.enqueue(
           :remove_upload_from_s3,
-          path: ::DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self),
+          path: s3_backup_path,
           upload_id: self.id
         )
       end
     end
 
+    def local_path
+      @local_path ||= Discourse.store.path_for(self)
+    end
+
+    def compress_backup?
+      @compress ||= begin
+        if FileHelper.respond_to?(:is_supported_image?)
+          !FileHelper.is_supported_image?(File.basename(local_path))
+        else
+          !FileHelper.is_image?(File.basename(local_path))
+        end
+      end
+    end
+
+    def s3_backup_path
+      "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self)}#{compress_backup? ? '.gz' : ''}.enc"
+    end
+
     def backup_to_s3
       DistributedMutex.synchronize("upload_backup_to_s3_#{self.id}") do
-        if (local_path = Discourse.store.path_for(self)) && File.exist?(local_path)
+        if local_path && File.exist?(local_path)
           s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
 
-          compress =
-            if FileHelper.respond_to?(:is_supported_image?)
-              !FileHelper.is_supported_image?(File.basename(local_path))
-            else
-              !FileHelper.is_image?(File.basename(local_path))
-            end
+          path = s3_backup_path
 
-          path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(self)}#{compress ? '.gz' : ''}.enc"
+          DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(
+            local_path, compress: compress_backup?
+          ) do |tmp_path|
 
-          DiscourseBackupUploadsToS3::Utils.file_encryptor.encrypt(local_path, compress: compress) do |tmp_path|
-            path = s3_helper.upload(tmp_path, path)
+            path = s3_helper.upload(tmp_path, s3_backup_path)
           end
 
           PluginStore.set(
