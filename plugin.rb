@@ -108,7 +108,9 @@ after_initialize do
 
     def compress_backup?
       @compress ||= begin
-        if FileHelper.respond_to?(:is_supported_image?)
+        if local_path.nil?
+          false
+        elsif FileHelper.respond_to?(:is_supported_image?)
           !FileHelper.is_supported_image?(File.basename(local_path))
         else
           !FileHelper.is_image?(File.basename(local_path))

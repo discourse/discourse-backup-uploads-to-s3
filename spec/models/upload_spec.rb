@@ -68,5 +68,19 @@ describe Upload do
         "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.enc"
       )
     end
+
+    it 'should enqueue a job to remove upload from s3 when there is no local copy of the upload' do
+      upload.update!(url: '//discourse-cloud-file-uploads.s3.dualstack.us-west-2.amazonaws.com/myuploads/original/4X/a/0/0/f00d495c71d3236ec0ae4a0c3364effb9ee61e11.jpeg')
+
+      expect { upload.destroy }.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(1)
+
+      args = Jobs::RemoveUploadFromS3.jobs.first['args'].first
+
+      expect(args['upload_id']).to eq(upload.id)
+
+      expect(args['path']).to eq(
+        "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.enc"
+      )
+    end
   end
 end
