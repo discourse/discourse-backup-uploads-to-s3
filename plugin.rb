@@ -92,7 +92,7 @@ after_initialize do
     end
 
     after_destroy do
-      if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3?
+      if ::DiscourseBackupUploadsToS3::Utils.backup_uploads_to_s3? && local_path
         Jobs.enqueue(
           :remove_upload_from_s3,
           path: s3_backup_path,
@@ -107,10 +107,12 @@ after_initialize do
 
     def compress_backup?
       @compress ||= begin
+        basename = File.basename(local_path)
+
         if FileHelper.respond_to?(:is_supported_image?)
-          !FileHelper.is_supported_image?(File.basename(local_path))
+          !FileHelper.is_supported_image?(basename)
         else
-          !FileHelper.is_image?(File.basename(local_path))
+          !FileHelper.is_image?(basename)
         end
       end
     end

@@ -68,6 +68,16 @@ describe Upload do
       )
     end
 
+    it 'should not do anything when a s3 upload is destroyed' do
+      upload.update!(
+        url: "//discourse-cloud-file-uploads.s3.dualstack.us-west-2.amazonaws.com/#{upload.url}"
+      )
+
+      expect do
+        upload.destroy!
+      end.to change { ::Jobs::RemoveUploadFromS3.jobs.size }.by(0)
+    end
+
     describe 'when s3 uploads is enabled' do
       before do
         SiteSetting.s3_access_key_id = 'some_key'
