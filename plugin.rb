@@ -49,14 +49,13 @@ after_initialize do
       end
 
       def self.backup_uploads_to_s3?
-        @backup_uploads_to_s3 ||= begin
-          GlobalSetting.try(:backup_uploads_to_s3_enabled) &&
-          GlobalSetting.try(:backup_uploads_to_s3_bucket).presence &&
-          GlobalSetting.try(:backup_uploads_to_s3_access_key_id).presence &&
-          GlobalSetting.try(:backup_uploads_to_s3_secret_access_key).presence &&
-          GlobalSetting.try(:backup_uploads_to_s3_region).presence &&
-          GlobalSetting.try(:backup_uploads_to_s3_encryption_key).presence
-        end
+        !SiteSetting.enable_s3_uploads &&
+        GlobalSetting.try(:backup_uploads_to_s3_enabled) &&
+        GlobalSetting.try(:backup_uploads_to_s3_bucket).present? &&
+        GlobalSetting.try(:backup_uploads_to_s3_access_key_id).present? &&
+        GlobalSetting.try(:backup_uploads_to_s3_secret_access_key).present? &&
+        GlobalSetting.try(:backup_uploads_to_s3_region).present? &&
+        GlobalSetting.try(:backup_uploads_to_s3_encryption_key).present?
       end
 
       def self.backup_uploads_to_s3_bucket
