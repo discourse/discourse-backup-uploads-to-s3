@@ -135,7 +135,7 @@ namespace "backup_uploads_to_s3" do
           analyzer.cooked_stripped.css("a", "img").each do |media|
             sha1 =
               if media.name == "a"
-                if href = media["href"] && data = Upload.extract_upload_url(href)
+                if href = media["href"] && data = Upload.extract_upload_url(media["href"])
                   data[2]
                 end
               elsif media.name == 'img'
