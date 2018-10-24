@@ -148,7 +148,7 @@ namespace "backup_uploads_to_s3" do
               end
             elsif media.name == 'img'
               if dom_class = media["class"] &&
-                 (Post.white_listed_image_classes & dom_class.split).count > 0
+                 (Post.white_listed_image_classes & media["class"].split).count > 0
 
                 next
               end
