@@ -155,6 +155,8 @@ namespace "backup_uploads_to_s3" do
 
               if orig_src = media["data-orig-src"]
                 Upload.sha1_from_short_url(orig_src)
+              elsif orig_src = media["src"] && data = Upload.extract_upload_url(media["src"])
+                data[2]
               end
             end
 
