@@ -32,7 +32,7 @@ describe Jobs::BackupUploadToS3 do
   end
 
   it 'should not do anything if upload is not found' do
-    subject.execute(upload_id: -1)
+    subject.execute(upload_id: 999)
 
     expect(PluginStore.get(
       DiscourseBackupUploadsToS3::PLUGIN_NAME,
