@@ -9,7 +9,10 @@ describe Jobs::BackupUploadToS3 do
     UploadCreator.new(file, "logo.png").create_for(user.id)
   end
 
-  let(:upload_path) { "original/1X/#{upload.sha1}.png" }
+  let(:upload_path) do
+    FileStore::BaseStore.new.get_path_for_upload(upload)
+  end
+
   let(:s3_object) { stub }
   let(:s3_bucket) { stub }
 
@@ -32,7 +35,7 @@ describe Jobs::BackupUploadToS3 do
   end
 
   it 'should not do anything if upload is not found' do
-    subject.execute(upload_id: -1)
+    subject.execute(upload_id: 999)
 
     expect(PluginStore.get(
       DiscourseBackupUploadsToS3::PLUGIN_NAME,
@@ -74,8 +77,6 @@ describe Jobs::BackupUploadToS3 do
         UploadCreator.new(file, "discourse.csv").create_for(user.id)
       end
 
-      let(:upload_path) { "original/1X/#{upload.sha1}.csv" }
-
       it 'should compress and store the upload on to s3' do
         SiteSetting.authorized_extensions = 'csv'
 
@@ -84,7 +85,10 @@ describe Jobs::BackupUploadToS3 do
           .yields(file)
 
         S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
-        s3_bucket.expects(:object).with("default/#{upload_path}.gz.enc").returns(s3_object)
+
+        s3_bucket.expects(:object).with("default/#{upload_path}.gz.enc")
+          .returns(s3_object)
+
         s3_object.stubs(:put).returns(Aws::S3::Types::PutObjectOutput.new(etag: etag))
 
         subject.execute(upload_id: upload.id)
