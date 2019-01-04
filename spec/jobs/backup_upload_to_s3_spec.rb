@@ -57,7 +57,7 @@ describe Jobs::BackupUploadToS3 do
     let(:etag) { "ETag" }
 
     it "should store the upload on to s3" do
-      DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
+      DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file.path)
       S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
       s3_bucket.expects(:object).with("default/#{upload_path}.enc").returns(s3_object)
       s3_object.stubs(:put).returns(Aws::S3::Types::PutObjectOutput.new(etag: etag))
@@ -82,7 +82,7 @@ describe Jobs::BackupUploadToS3 do
 
         DiscourseBackupUploadsToS3::FileEncryptor
           .any_instance.stubs(:encrypt)
-          .yields(file)
+          .yields(file.path)
 
         S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
 
@@ -106,7 +106,7 @@ describe Jobs::BackupUploadToS3 do
       end
 
       it "should store the upload on to s3" do
-        DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file_from_fixtures("logo.png"))
+        DiscourseBackupUploadsToS3::FileEncryptor.any_instance.stubs(:encrypt).yields(file.path)
         S3Helper.any_instance.expects(:s3_bucket).returns(s3_bucket)
         s3_bucket.expects(:object).with("path/default/#{upload_path}.enc").returns(s3_object)
         s3_object.stubs(:put).returns(Aws::S3::Types::PutObjectOutput.new(etag: etag))

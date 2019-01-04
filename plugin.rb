@@ -132,7 +132,9 @@ after_initialize do
             local_path, compress: compress_backup?
           ) do |tmp_path|
 
-            path, etag = s3_helper.upload(tmp_path, s3_backup_path)
+            File.open(tmp_path.to_s) do |file|
+              path, etag = s3_helper.upload(file, s3_backup_path)
+            end
           end
 
           PluginStore.set(
