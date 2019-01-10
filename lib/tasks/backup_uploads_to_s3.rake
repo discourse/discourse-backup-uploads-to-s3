@@ -68,6 +68,8 @@ namespace "backup_uploads_to_s3" do
 
                 FileUtils.mkdir_p(File.dirname(local_path))
                 file_encryptor.decrypt(tmp_path, local_path)
+              rescue Aws::S3::Errors::AccessDenied
+                puts "Access to #{file_path} was denied."
               rescue Aws::S3::Errors::NoSuchBucket
                 puts "AWS S3 Bucket '#{bucket_name}' does not exist."
               rescue Aws::S3::Errors::NoSuchKey
