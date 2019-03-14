@@ -10,7 +10,7 @@ namespace "backup_uploads_to_s3" do
 
     s3_helper = DiscourseBackupUploadsToS3::Utils.s3_helper
 
-    Upload.find_each do |upload|
+    Upload.by_users.find_each do |upload|
       path = "#{DiscourseBackupUploadsToS3::Utils.s3_store.get_path_for_upload(upload)}.gz.enc"
       object = s3_helper.object(path)
       next if object.exists? && object.content_length != 0
@@ -41,8 +41,8 @@ namespace "backup_uploads_to_s3" do
     avatar_upload_ids = UserAvatar.all.pluck(:custom_upload_id, :gravatar_upload_id).flatten.compact
 
     [
-      Upload.where(id: avatar_upload_ids),
-      Upload.where.not(id: avatar_upload_ids)
+      Upload.by_users.where(id: avatar_upload_ids),
+      Upload.by_users.where.not(id: avatar_upload_ids)
     ].each do |scope|
       scope.find_each do |upload|
         local_path = store.path_for(upload)
