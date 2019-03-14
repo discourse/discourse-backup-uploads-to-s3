@@ -25,13 +25,7 @@ describe Jobs::BackupUploadToS3 do
     GlobalSetting.stubs(:backup_uploads_to_s3_secret_access_key).returns('some secret key')
     GlobalSetting.stubs(:backup_uploads_to_s3_region).returns('us-west-1')
     GlobalSetting.stubs(:backup_uploads_to_s3_encryption_key).returns('U6ocWTLaXcvIvX5nSCYch5jV02Z+H9YQXaaIo8aNV/E=\n')
-
-    @original_site_setting = SiteSetting.queue_jobs
     SiteSetting.queue_jobs = true
-  end
-
-  after do
-    SiteSetting.queue_jobs = @original_site_setting
   end
 
   it 'should not do anything if upload is not found' do
