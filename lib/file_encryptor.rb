@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module DiscourseBackupUploadsToS3
   class FileEncryptor
     TMP_FOLDER = Rails.root.join('tmp')

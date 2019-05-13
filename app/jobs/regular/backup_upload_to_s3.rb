@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Jobs
   class BackupUploadToS3 < Jobs::Base
     sidekiq_options queue: 'low'

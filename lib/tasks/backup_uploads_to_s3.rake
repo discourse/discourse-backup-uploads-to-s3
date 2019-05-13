@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace "backup_uploads_to_s3" do
   desc "Backfill uploads that are missing from S3 backups"
   task "backfill" => :environment do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # name: discourse-backup-uploads-to-s3
 # about: Backup uploads with encryption to a bucket on S3
 # version: 0.0.1
