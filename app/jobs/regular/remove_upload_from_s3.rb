@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Jobs
-  class RemoveUploadFromS3 < Jobs::Base
+  class RemoveUploadFromS3 < ::Jobs::Base
     sidekiq_options queue: 'low'
 
     def execute(args)

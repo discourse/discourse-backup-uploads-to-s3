@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Jobs
-  class BackupUploadToS3 < Jobs::Base
+  class BackupUploadToS3 < ::Jobs::Base
     sidekiq_options queue: 'low'
 
     def execute(args)
