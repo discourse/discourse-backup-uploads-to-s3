@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Jobs
-  class BackfillUploadsBackup < Jobs::Scheduled
+  class BackfillUploadsBackup < ::Jobs::Scheduled
     every 1.hour
 
     def execute(args)
